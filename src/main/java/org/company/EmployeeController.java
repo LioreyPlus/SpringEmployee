@@ -30,6 +30,7 @@ public class EmployeeController {
         if (repository.count() == 0) {
             List<Employee> employees = new ArrayList<>();
             Employee employee = new Employee();
+            employee.setId(id);
             employee.setName(name);
             employee.setSalary(salary);
             employees.add(employee);
@@ -40,11 +41,11 @@ public class EmployeeController {
     }
 
     @GetMapping("/employees/{id}")
-    public ResponseEntity<Employee> findById(long id) {
+    public ResponseEntity<Employee> findById(@PathVariable long id) {
 
         if (!repository.existsById(id)) {
             Employee employee = new Employee();
-            employee.setId(id);
+            employee.setId(this.id);
             employee.setName(name);
             employee.setSalary(salary);
             return new ResponseEntity<>(employee, HttpStatus.OK);
