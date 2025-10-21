@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -13,6 +14,9 @@ public class EmployeeController {
 
     @Autowired
     private EmployeeRepository repository;
+
+    @Value("${employee.id}")
+    private long id;
 
     @Value("${employee.name}")
     private String name;
@@ -24,25 +28,26 @@ public class EmployeeController {
     public List<Employee> findAll() {
 
         if (repository.count() == 0) {
+            List<Employee> employees = new ArrayList<>();
             Employee employee = new Employee();
             employee.setName(name);
             employee.setSalary(salary);
-            repository.save(employee);
+            employees.add(employee);
+            return employees;
 
         }
-        return (List<Employee>) repository.findAll();
+            return (List<Employee>) repository.findAll();
     }
 
     @GetMapping("/employees/{id}")
-    public ResponseEntity<Employee> findById(@PathVariable long id) {
+    public ResponseEntity<Employee> findById(long id) {
 
         if (!repository.existsById(id)) {
             Employee employee = new Employee();
             employee.setId(id);
             employee.setName(name);
             employee.setSalary(salary);
-            repository.save(employee);
-
+            return new ResponseEntity<>(employee, HttpStatus.OK);
         }
         return repository.findById(id)
                 .map(employee -> new ResponseEntity<>(employee, HttpStatus.OK))
