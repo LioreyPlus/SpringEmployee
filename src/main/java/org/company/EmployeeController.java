@@ -1,12 +1,9 @@
 package org.company;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -15,41 +12,13 @@ public class EmployeeController {
     @Autowired
     private EmployeeRepository repository;
 
-    @Value("${employee.id}")
-    private long id;
-
-    @Value("${employee.name}")
-    private String name;
-
-    @Value("${employee.salary}")
-    private int salary;
-
     @GetMapping("/employees")
     public List<Employee> findAll() {
-
-        if (repository.count() == 0) {
-            List<Employee> employees = new ArrayList<>();
-            Employee employee = new Employee();
-            employee.setId(id);
-            employee.setName(name);
-            employee.setSalary(salary);
-            employees.add(employee);
-            return employees;
-
-        }
             return (List<Employee>) repository.findAll();
     }
 
     @GetMapping("/employees/{id}")
     public ResponseEntity<Employee> findById(@PathVariable long id) {
-
-        if (!repository.existsById(id)) {
-            Employee employee = new Employee();
-            employee.setId(this.id);
-            employee.setName(name);
-            employee.setSalary(salary);
-            return new ResponseEntity<>(employee, HttpStatus.OK);
-        }
         return repository.findById(id)
                 .map(employee -> new ResponseEntity<>(employee, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));

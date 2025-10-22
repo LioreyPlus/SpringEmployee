@@ -1,4 +1,16 @@
-employee:
-  id: 1
-  name: Ivan Ivanov
-  salary: 50000
+spring:
+  datasource:
+    url: jdbc:sqlite:src/main/resources/Employee.db
+    driver-class-name: org.sqlite.JDBC
+    username:
+    password:
+
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.community.dialect.SQLiteDialect
