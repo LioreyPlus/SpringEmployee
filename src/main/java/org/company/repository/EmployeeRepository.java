@@ -12,22 +12,23 @@ import java.util.List;
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
     List<Employee> findByName(String name);
+
     List<Employee> findByRole(String role);
 
     List<Employee> findBySalaryBetween(@Param("minSalary") Long minSalary, @Param("maxSalary") Long maxSalary);
 
     @Query("""
-            SELECT e
-            FROM Employee e
-            WHERE e.branch.id = :branchId
-           """)
+             SELECT e
+             FROM Employee e
+             WHERE e.branch.id = :branchId
+            """)
     List<Employee> findByBranchId(@Param("branchId") Long branchId);
 
     @Query("""
-    SELECT COUNT(e)
-    FROM Employee e
-    WHERE e.branch.id = :branchId
-   """)
+             SELECT COUNT(e)
+             FROM Employee e
+             WHERE e.branch.id = :branchId
+            """)
     Long countByBranchId(@Param("branchId") Long branchId);
 
     @Query("""

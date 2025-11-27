@@ -14,12 +14,12 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     List<Project> findByName(String name);
 
     @Query("""
-        SELECT new org.company.dto.ProjectStatsDTO(p.name, COUNT(e.id)) 
-        FROM Project p
-        LEFT JOIN p.employees e
-        GROUP BY p.id, p.name
-        ORDER BY COUNT(e.id) DESC
-        """)
+            SELECT new org.company.dto.ProjectStatsDTO(p.name, COUNT(e.id)) 
+            FROM Project p
+            LEFT JOIN p.employees e
+            GROUP BY p.id, p.name
+            ORDER BY COUNT(e.id) DESC
+            """)
     List<ProjectStatsDTO> findProjectEmployeeStats();
 
     @Query("""

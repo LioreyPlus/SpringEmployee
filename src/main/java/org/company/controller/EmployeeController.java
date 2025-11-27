@@ -2,8 +2,7 @@ package org.company.controller;
 
 import org.company.dto.EmployeeDTO;
 import org.company.entity.Employee;
-import org.company.mapper.EmployeeMapper;
-import org.company.repository.EmployeeRepository;
+import org.company.service.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,15 +15,11 @@ import java.util.List;
 public class EmployeeController {
 
     @Autowired
-    private EmployeeRepository repository;
-
-    @Autowired
-    private EmployeeMapper employeeMapper;
+    private EmployeeService employeeService;
 
     @GetMapping("/employees")
     public List<EmployeeDTO> findAll() {
-        List<Employee> employees = repository.findAll();
-        return employeeMapper.toDTOList(employees);
+        return employeeService.findAll();
     }
 
     @GetMapping("/employees/by-salary")
@@ -33,13 +28,12 @@ public class EmployeeController {
             @RequestParam(defaultValue = "150000") Long maxSalary) {
 
         try {
-            List<Employee> employees = repository.findBySalaryBetween(minSalary, maxSalary);
+            List<EmployeeDTO> employeeDTOs = employeeService.findBySalaryRange(minSalary, maxSalary);
 
-            if (employees.isEmpty()) {
+            if (employeeDTOs.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             }
 
-            List<EmployeeDTO> employeeDTOs = employeeMapper.toDTOList(employees);
             return new ResponseEntity<>(employeeDTOs, HttpStatus.OK);
 
         } catch (Exception e) {
@@ -49,25 +43,17 @@ public class EmployeeController {
 
     @GetMapping("/employees/{id}")
     public ResponseEntity<EmployeeDTO> findById(@PathVariable long id) {
-        return repository.findById(id)
-                .map(employee -> {
-                    EmployeeDTO dto = employeeMapper.toDTO(employee);
-                    return new ResponseEntity<>(dto, HttpStatus.OK);
-                })
+        return employeeService.findById(id)
+                .map(employee -> new ResponseEntity<>(employee, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @GetMapping("/employees/{id}/projects")
     public ResponseEntity<EmployeeDTO> getEmployeeWithProjects(@PathVariable long id) {
         try {
-            List<Employee> employees = repository.findEmployeeWithProjects(id);
-
-            if (employees.isEmpty()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-
-            EmployeeDTO employeeDTO = employeeMapper.toDTO(employees.get(0));
-            return new ResponseEntity<>(employeeDTO, HttpStatus.OK);
+            return employeeService.getEmployeeWithProjects(id)
+                    .map(employee -> new ResponseEntity<>(employee, HttpStatus.OK))
+                    .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
 
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -76,30 +62,21 @@ public class EmployeeController {
 
     @PostMapping("/employees")
     public ResponseEntity<EmployeeDTO> create(@RequestBody Employee employee) {
-        Employee saved = repository.save(employee);
-        EmployeeDTO savedDTO = employeeMapper.toDTO(saved);
+        EmployeeDTO savedDTO = employeeService.create(employee);
         return new ResponseEntity<>(savedDTO, HttpStatus.CREATED);
     }
 
     @PutMapping("/employees/{id}")
     public ResponseEntity<EmployeeDTO> update(@PathVariable long id, @RequestBody Employee employee) {
-        return repository.findById(id)
-                .map(existing -> {
-                    employee.setId(id);
-                    Employee updated = repository.save(employee);
-                    EmployeeDTO updatedDTO = employeeMapper.toDTO(updated);
-                    return new ResponseEntity<>(updatedDTO, HttpStatus.OK);
-                })
+        return employeeService.update(id, employee)
+                .map(updated -> new ResponseEntity<>(updated, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @DeleteMapping("/employees/{id}")
     public ResponseEntity<Void> delete(@PathVariable long id) {
-        return repository.findById(id)
-                .map(existing -> {
-                    repository.deleteById(id);
-                    return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
-                })
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        return employeeService.delete(id)
+                ? new ResponseEntity<>(HttpStatus.NO_CONTENT)
+                : new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 }

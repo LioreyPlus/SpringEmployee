@@ -3,8 +3,7 @@ package org.company.controller;
 import org.company.dto.BranchDTO;
 import org.company.dto.BranchStatsDTO;
 import org.company.entity.Branch;
-import org.company.mapper.BranchMapper;
-import org.company.repository.BranchRepository;
+import org.company.service.BranchService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,31 +16,24 @@ import java.util.List;
 public class BranchController {
 
     @Autowired
-    private BranchRepository repository;
-
-    @Autowired
-    private BranchMapper branchMapper;
+    private BranchService branchService;
 
     @GetMapping("/branches")
     public List<BranchDTO> findAll() {
-        List<Branch> branches = repository.findAll();
-        return branchMapper.toDTOList(branches);
+        return branchService.findAll();
     }
 
     @GetMapping("/branches/{id}")
     public ResponseEntity<BranchDTO> findById(@PathVariable long id) {
-        return repository.findById(id)
-                .map(branch -> {
-                    BranchDTO dto = branchMapper.toDTO(branch);
-                    return new ResponseEntity<>(dto, HttpStatus.OK);
-                })
+        return branchService.findById(id)
+                .map(branch -> new ResponseEntity<>(branch, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @GetMapping("/branches/employee-stats")
     public ResponseEntity<List<BranchStatsDTO>> getBranchEmployeeStats() {
         try {
-            List<BranchStatsDTO> stats = repository.findBranchEmployeeStats();
+            List<BranchStatsDTO> stats = branchService.getBranchEmployeeStats();
 
             if (stats.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -56,30 +48,21 @@ public class BranchController {
 
     @PostMapping("/branches")
     public ResponseEntity<BranchDTO> create(@RequestBody Branch branch) {
-        Branch saved = repository.save(branch);
-        BranchDTO savedDTO = branchMapper.toDTO(saved);
+        BranchDTO savedDTO = branchService.create(branch);
         return new ResponseEntity<>(savedDTO, HttpStatus.CREATED);
     }
 
     @PutMapping("/branches/{id}")
     public ResponseEntity<BranchDTO> update(@PathVariable long id, @RequestBody Branch branch) {
-        return repository.findById(id)
-                .map(existing -> {
-                    branch.setId(id);
-                    Branch updated = repository.save(branch);
-                    BranchDTO updatedDTO = branchMapper.toDTO(updated);
-                    return new ResponseEntity<>(updatedDTO, HttpStatus.OK);
-                })
+        return branchService.update(id, branch)
+                .map(updated -> new ResponseEntity<>(updated, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @DeleteMapping("/branches/{id}")
     public ResponseEntity<Void> delete(@PathVariable long id) {
-        return repository.findById(id)
-                .map(existing -> {
-                    repository.deleteById(id);
-                    return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
-                })
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        return branchService.delete(id)
+                ? new ResponseEntity<>(HttpStatus.NO_CONTENT)
+                : new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 }

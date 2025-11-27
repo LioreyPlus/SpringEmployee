@@ -12,6 +12,7 @@ import java.util.List;
 @RepositoryRestResource(collectionResourceRel = "branches", path = "branches")
 public interface BranchRepository extends JpaRepository<Branch, Long> {
     List<Branch> findByName(@Param("name") String name);
+
     @Query("""
             SELECT new org.company.dto.BranchStatsDTO(b.name, COUNT(e.id))
             FROM Branch b

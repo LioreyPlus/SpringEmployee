@@ -3,8 +3,7 @@ package org.company.controller;
 import org.company.dto.ProjectDTO;
 import org.company.dto.ProjectStatsDTO;
 import org.company.entity.Project;
-import org.company.mapper.ProjectMapper;
-import org.company.repository.ProjectRepository;
+import org.company.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,31 +16,24 @@ import java.util.List;
 public class ProjectController {
 
     @Autowired
-    private ProjectRepository repository;
-
-    @Autowired
-    private ProjectMapper projectMapper;
+    private ProjectService projectService;
 
     @GetMapping("/projects")
     public List<ProjectDTO> findAll() {
-        List<Project> projects = repository.findAll();
-        return projectMapper.toDTOList(projects);
+        return projectService.findAll();
     }
 
     @GetMapping("/projects/{id}")
     public ResponseEntity<ProjectDTO> findById(@PathVariable long id) {
-        return repository.findById(id)
-                .map(project -> {
-                    ProjectDTO dto = projectMapper.toDTO(project);
-                    return new ResponseEntity<>(dto, HttpStatus.OK);
-                })
+        return projectService.findById(id)
+                .map(project -> new ResponseEntity<>(project, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @GetMapping("/projects/employee-stats")
     public ResponseEntity<List<ProjectStatsDTO>> getProjectEmployeeStats() {
         try {
-            List<ProjectStatsDTO> stats = repository.findProjectEmployeeStats();
+            List<ProjectStatsDTO> stats = projectService.getProjectEmployeeStats();
 
             if (stats.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -57,47 +49,32 @@ public class ProjectController {
     @GetMapping("/projects/{id}/employees")
     public ResponseEntity<ProjectDTO> getProjectWithEmployees(@PathVariable long id) {
         try {
-            List<Project> projects = repository.findProjectWithEmployees(id);
-
-            if (projects.isEmpty()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-
-            ProjectDTO projectDTO = projectMapper.toDTO(projects.get(0));
-            return new ResponseEntity<>(projectDTO, HttpStatus.OK);
+            return projectService.getProjectWithEmployees(id)
+                    .map(project -> new ResponseEntity<>(project, HttpStatus.OK))
+                    .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
 
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-
     @PostMapping("/projects")
     public ResponseEntity<ProjectDTO> create(@RequestBody Project project) {
-        Project saved = repository.save(project);
-        ProjectDTO savedDTO = projectMapper.toDTO(saved);
+        ProjectDTO savedDTO = projectService.create(project);
         return new ResponseEntity<>(savedDTO, HttpStatus.CREATED);
     }
 
     @PutMapping("/projects/{id}")
     public ResponseEntity<ProjectDTO> update(@PathVariable long id, @RequestBody Project project) {
-        return repository.findById(id)
-                .map(existing -> {
-                    project.setId(id);
-                    Project updated = repository.save(project);
-                    ProjectDTO updatedDTO = projectMapper.toDTO(updated);
-                    return new ResponseEntity<>(updatedDTO, HttpStatus.OK);
-                })
+        return projectService.update(id, project)
+                .map(updated -> new ResponseEntity<>(updated, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @DeleteMapping("/projects/{id}")
     public ResponseEntity<Void> delete(@PathVariable long id) {
-        return repository.findById(id)
-                .map(existing -> {
-                    repository.deleteById(id);
-                    return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
-                })
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        return projectService.delete(id)
+                ? new ResponseEntity<>(HttpStatus.NO_CONTENT)
+                : new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 }
